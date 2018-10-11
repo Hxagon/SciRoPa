@@ -1,0 +1,2 @@
+# SciRoPa
+Scissors, Rock, Paper
