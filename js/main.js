@@ -13,14 +13,15 @@ class SciRoPa {
             document.getElementById('gameId').value = localStorage.getItem('gameId');
         }
 
-        this.player2Weapons = ['weaponPlayer2Rock', 'weaponPlayer2Paper', 'weaponPlayer2Scissors'];
+        this.availableWeapons = ['weaponPlayer2Rock', 'weaponPlayer2Paper', 'weaponPlayer2Scissors'];
     }
 
-    setupPlayer2Weapons() {
-        const player2Weapons = this.getPlayer2Weapons();
-        const weaponPicker = Math.floor(Math.random() * player2Weapons.length);
-        console.debug('Player2 weapon: ', player2Weapons[weaponPicker]);
-        selectWeapon(player2Weapons[weaponPicker]);
+    setupPlayer2Weapon() {
+        const getAvailableWeapons = this.getAvailableWeapons();
+        const weaponPicker = Math.floor(Math.random() * getAvailableWeapons.length);
+        console.debug('Player2 weapon: ', getAvailableWeapons[weaponPicker]);
+        selectWeapon(getAvailableWeapons[weaponPicker]);
+        this.setPlayer2Weapon(getAvailableWeapons[weaponPicker]);
     }
 
     getPlayer1Weapon() {
@@ -31,8 +32,55 @@ class SciRoPa {
         this.player1Weapon = player1Weapon;
     }
 
-    getPlayer2Weapons() {
-        return this.player2Weapons;
+    getPlayer2Weapon() {
+        return this.player2Weapon;
+    }
+
+    setPlayer2Weapon(player2Weapon) {
+        this.player2Weapon = player2Weapon;
+    }
+
+    getAvailableWeapons() {
+        return this.availableWeapons;
+    }
+
+    calculateScores() {
+        const weaponScores =
+        {
+            'weaponPlayer1Scissors': {
+                'weaponPlayer2Rock': -1,
+                'weaponPlayer2Paper': 1,
+                'weaponPlayer2Scissors': 0
+            },
+            'weaponPlayer1Rock': {
+                'weaponPlayer2Paper': -1,
+                'weaponPlayer2Scissors': 1,
+                'weaponPlayer2Rock': 0
+            },
+            'weaponPlayer1Paper': {
+                'weaponPlayer2Scissors': -1,
+                'weaponPlayer2Rock': 1,
+                'weaponPlayer2Paper': 0
+            }
+        };
+
+        const scoreObject = this.pickWeaponScores(weaponScores, [this.getPlayer1Weapon()]);
+        const player2WeaponScores = scoreObject[this.getPlayer1Weapon()];
+        const player2WeaponScore = player2WeaponScores[this.getPlayer2Weapon()];
+        console.debug('player2WeaponScore', player2WeaponScore);
+
+        if (player2WeaponScore === 0) {
+            return 'Draw';
+        } else if (player2WeaponScore < 0) {
+            return 'CPU Win';
+        } else {
+            return 'You Win';
+        }
+    }
+
+    pickWeaponScores(obj, keys) {
+        return keys.map(k => k in obj ? {[k]: obj[k]} : {})
+            .reduce((res, o) => Object.assign(res, o), {});
     }
 }
 
@@ -44,13 +92,19 @@ function newGame() {
 }
 
 function fight() {
+    if (!sciRoPa.getPlayer1Weapon()) {
+        console.debug('Weapon for Player1 is missing');
+        return;
+    }
     console.debug('Fight started');
-    sciRoPa.getPlayer2Weapons().forEach((player2Weapon) => {
+
+    //Unselect weapons from previous fight
+    sciRoPa.getAvailableWeapons().forEach((player2Weapon) => {
         unselectWeapon(player2Weapon);
     });
 
-    sciRoPa.setupPlayer2Weapons();
-
+    sciRoPa.setupPlayer2Weapon();
+    console.log('winner: ' + sciRoPa.calculateScores());
 }
 
 function chooseWeapon(weaponId) {
